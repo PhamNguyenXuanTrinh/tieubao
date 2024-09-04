@@ -70,20 +70,25 @@ login(
       console.log("Received message:", message); // Log the message object
 
       const msgBody = message.body;
-      if (msgBody && msgBody.includes("tiểu bảo"))
-        api.sendMessage("Dạ có con", message.threadID);
+      if (msgBody && msgBody.includes("tiểu bảo")) {
+        setTimeout(() => {
+          api.sendMessage("Dạ có con", message.threadID);
+        }, 2000); // Delay of 2 seconds
+      }
       if (msgBody && msgBody.includes("học gì")) {
-        // Check if msgBody is defined
-        const days = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
-        let response = "dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ";
+        setTimeout(() => {
+          // Check if msgBody is defined
+          const days = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
+          let response = "dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ";
 
-        days.forEach((day) => {
-          if (msgBody.includes(day)) {
-            response = getSchedule(day);
-          }
-        });
+          days.forEach((day) => {
+            if (msgBody.includes(day)) {
+              response = getSchedule(day);
+            }
+          });
 
-        api.sendMessage(response, message.threadID);
+          api.sendMessage(response, message.threadID);
+        }, 3000); // Delay of 2 seconds
       }
     });
   }
