@@ -81,7 +81,7 @@ login(
       if (msgBody && msgBody.includes("tiểu bảo")) {
         setTimeout(() => {
           api.sendMessage("Dạ có con", message.threadID);
-        }, 2000); // Delay of 2 seconds
+        }, 5000); // Delay of 2 seconds
       }
 
       if (msgBody && msgBody.includes("học gì")) {
