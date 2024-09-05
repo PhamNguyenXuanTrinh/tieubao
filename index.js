@@ -56,18 +56,26 @@ function getSchedule(day) {
   const morning = daySchedule.morning.join(", ");
   const afternoon = daySchedule.afternoon.join(", ");
 
-  return `Thời khóa biểu ${day} " của mẹ Thiên Kim XINH ĐẸP NHẤT THẾ GIỚI LÀ" :\nBuổi sáng: ${morning}\nBuổi chiều: ${afternoon}`;
+  return `Thời khóa biểu ${day} của mẹ Thiên Kim XINH ĐẸP NHẤT THẾ GIỚI LÀ:\nBuổi sáng: ${morning}\nBuổi chiều: ${afternoon}`;
 }
 
+// Facebook Chat API Login
 login(
   { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
   (err, api) => {
-    if (err) return console.error(err);
+    if (err) {
+      console.error("Login error:", err);
+      return;
+    }
 
+    // Start listening for messages
     api.listenMqtt((err, message) => {
-      if (err) return console.error(err);
+      if (err) {
+        console.error("Error in message listener:", err);
+        return;
+      }
 
-      console.log("Received message:", message); // Log the message object
+      console.log("Received message:", message); // Log the message for debugging
 
       const msgBody = message.body;
       if (msgBody && msgBody.includes("tiểu bảo")) {
@@ -75,11 +83,11 @@ login(
           api.sendMessage("Dạ có con", message.threadID);
         }, 2000); // Delay of 2 seconds
       }
+
       if (msgBody && msgBody.includes("học gì")) {
         setTimeout(() => {
-          // Check if msgBody is defined
           const days = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
-          let response = "dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ";
+          let response = "Dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ.";
 
           days.forEach((day) => {
             if (msgBody.includes(day)) {
@@ -88,12 +96,13 @@ login(
           });
 
           api.sendMessage(response, message.threadID);
-        }, 3000); // Delay of 2 seconds
+        }, 2000); // Delay of 2 seconds
       }
     });
   }
 );
 
+// Express server setup
 app.listen(port, () => {
-  console.log(`Máy chủ đang lắng nghe tại http://localhost:${port}`);
+  console.log(`Server is listening at http://localhost:${port}`);
 });
