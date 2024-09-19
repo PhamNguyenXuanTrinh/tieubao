@@ -69,9 +69,9 @@ function getSchedule(day) {
 
   // Randomize responses
   const responses = [
-    "Dạ, hôm nay mẹ học môn này nhé: ",
-    "Để con xem nào... Dạ, đây là thời khóa biểu hôm nay của mẹ: ",
-    "À, hôm nay mẹ học các môn này nè: ",
+    "Dạ, mẹ học môn này nhé: ",
+    "Để con xem nào... Dạ, đây là thời khóa biểu của mẹ: ",
+    "À, mẹ học các môn này nè: ",
   ];
 
   const randomResponse = responses[Math.floor(Math.random() * responses.length)];
