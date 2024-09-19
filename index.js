@@ -46,14 +46,19 @@ const schedule = {
     afternoon: ["GDĐP-Nhạc - Tý", "GDĐP-Nhạc - Tý", "GDĐP-Nhạc - Tý"],
   },
 };
+
+// Helper function to get tomorrow's schedule
 function getTomorrowSchedule() {
   const daysOfWeek = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
-  const today = new Date().getDay();
-  const tomorrowIndex = today === 6 ? 0 : today + 1;
+  const today = new Date().getDay(); // Sunday is 0, Monday is 1, ..., Saturday is 6
+
+  const tomorrowIndex = today === 6 ? 0 : today; // Loop back to "thứ 2" on Sunday
   const tomorrow = daysOfWeek[tomorrowIndex];
+
   return getSchedule(tomorrow);
 }
 
+// Function to get the schedule for a specific day
 function getSchedule(day) {
   const lowerCaseDay = day.toLowerCase();
   const daySchedule = schedule[lowerCaseDay];
@@ -62,135 +67,91 @@ function getSchedule(day) {
   const morning = daySchedule.morning.join(", ");
   const afternoon = daySchedule.afternoon.join(", ");
 
+  // Randomize responses
   const responses = [
     "Dạ, mẹ học môn này nhé: ",
     "Để con xem nào... Dạ, đây là thời khóa biểu của mẹ: ",
     "À, mẹ học các môn này nè: ",
   ];
 
-  const randomResponse =
-    responses[Math.floor(Math.random() * responses.length)];
+  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
   return `${randomResponse}\nBuổi sáng: ${morning}\nBuổi chiều: ${afternoon}`;
 }
 
+// Add random delay for natural responses
 function randomDelay(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function saveAppState(api) {
-  fs.writeFileSync("appstate.json", JSON.stringify(api.getAppState(), null, 2));
-}
-
-// Function to handle API login
-function handleLogin(err, api) {
-  if (err) {
-    console.error("Login error:", err);
-    return;
-  }
-
-  // Save the initial app state
-  saveAppState(api);
-
-  // Start listening for messages
-  api.listenMqtt((err, message) => {
+// Facebook Chat API Login
+login(
+  { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
+  (err, api) => {
     if (err) {
-      console.error("Error in message listener:", err);
+      console.error("Login error:", err);
       return;
     }
 
-    console.log("Received message:", message);
-
-    const msgBody = message.body;
-    if (msgBody && msgBody.includes("tiểu bảo")) {
-      setTimeout(() => {
-        api.sendMessage("Dạ có con", message.threadID);
-      }, randomDelay(2000, 6000)); // Random delay of 2-6 seconds
-    }
-
-    if (msgBody && msgBody.includes("học gì")) {
-      setTimeout(() => {
-        const days = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
-        let response = "Dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ.";
-
-        // Check if the user asks for tomorrow's schedule
-        if (msgBody.includes("ngày mai")) {
-          response = getTomorrowSchedule();
-        } else {
-          // Look for specific days in the message
-          days.forEach((day) => {
-            if (msgBody.includes(day)) {
-              response = getSchedule(day);
-            }
-          });
-        }
-
-        // Occasionally add a natural comment
-        const additionalComments = [
-          "Hôm nay mẹ có vui không ạ?",
-          "Con thấy trời đẹp quá mẹ ơi!",
-          "À mẹ nhớ ăn sáng nhé!",
-        ];
-
-        if (Math.random() < 0.3) {
-          // 30% chance to add an additional comment
-          const randomComment =
-            additionalComments[
-              Math.floor(Math.random() * additionalComments.length)
-            ];
-          response += `\n${randomComment}`;
-        }
-
-        // Add random "clarification" response sometimes
-        const clarificationResponses = [
-          "Dạ, mẹ có thể nói lại giúp con không ạ?",
-          "Con chưa rõ lắm, mẹ hỏi lại được không ạ?",
-        ];
-
-        if (Math.random() < 0.1) {
-          // 10% chance to ask for clarification
-          api.sendMessage(
-            clarificationResponses[
-              Math.floor(Math.random() * clarificationResponses.length)
-            ],
-            message.threadID
-          );
-        } else {
-          api.sendMessage(response, message.threadID);
-        }
-      }, randomDelay(4000, 10000)); // Random delay of 4-8 seconds
-    }
-  });
-
-  // Periodically check if the session is still valid
-  setInterval(() => {
-    api.getUserID("me", (err, userId) => {
+    // Start listening for messages
+    api.listenMqtt((err, message) => {
       if (err) {
-        console.error("Error checking session validity:", err);
-        // Handle session expiration (e.g., re-login)
-        login(
-          {
-            appState: fs.existsSync("appstate.json")
-              ? JSON.parse(fs.readFileSync("appstate.json", "utf8"))
-              : null,
-          },
-          handleLogin
-        );
-      } else {
-        // Save the current app state
-        saveAppState(api);
+        console.error("Error in message listener:", err);
+        return;
+      }
+
+      console.log("Received message:", message);
+
+      const msgBody = message.body;
+      if (msgBody && msgBody.includes("tiểu bảo")) {
+        setTimeout(() => {
+          api.sendMessage("Dạ có con", message.threadID);
+        }, randomDelay(2000, 6000)); // Random delay of 2-6 seconds
+      }
+
+      if (msgBody && msgBody.includes("học gì")) {
+        setTimeout(() => {
+          const days = ["thứ 2", "thứ 3", "thứ 4", "thứ 5", "thứ 6", "thứ 7"];
+          let response = "Dạ, Tiểu Bảo vẫn chưa hiểu ý của mẹ ạ.";
+
+          // Check if the user asks for tomorrow's schedule
+          if (msgBody.includes("ngày mai")) {
+            response = getTomorrowSchedule();
+          } else {
+            // Look for specific days in the message
+            days.forEach((day) => {
+              if (msgBody.includes(day)) {
+                response = getSchedule(day);
+              }
+            });
+          }
+
+          // Occasionally add a natural comment
+          const additionalComments = [
+            "Hôm nay mẹ có vui không ạ?",
+            "Con thấy trời đẹp quá mẹ ơi!",
+            "À mẹ nhớ ăn sáng nhé!",
+          ];
+
+          if (Math.random() < 0.3) { // 30% chance to add an additional comment
+            const randomComment = additionalComments[Math.floor(Math.random() * additionalComments.length)];
+            response += `\n${randomComment}`;
+          }
+
+          // Add random "clarification" response sometimes
+          const clarificationResponses = [
+            "Dạ, mẹ có thể nói lại giúp con không ạ?",
+            "Con chưa rõ lắm, mẹ hỏi lại được không ạ?",
+          ];
+
+          if (Math.random() < 0.1) { // 10% chance to ask for clarification
+            api.sendMessage(clarificationResponses[Math.floor(Math.random() * clarificationResponses.length)], message.threadID);
+          } else {
+            api.sendMessage(response, message.threadID);
+          }
+        }, randomDelay(4000, 10000)); // Random delay of 4-8 seconds
       }
     });
-  }, 60000); // Check every 60 seconds (adjust as needed)
-}
-
-// Facebook Chat API Login
-login(
-  {
-    appState: fs.existsSync("appstate.json")
-      ? JSON.parse(fs.readFileSync("appstate.json", "utf8"))
-      : null,
-  },
-  handleLogin
+  }
 );
 
 // Express server setup
